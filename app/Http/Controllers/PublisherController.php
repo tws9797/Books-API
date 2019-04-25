@@ -14,7 +14,7 @@ class PublisherController extends Controller
      */
     public function index()
     {
-        //
+
     }
 
     /**
