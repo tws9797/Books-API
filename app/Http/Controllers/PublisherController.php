@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Publisher;
+use App\Http\Requests\PublisherRequest;
+use App\Http\Resources\PublisherCollection;
+use App\Http\Resources\PublisherResource;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PublisherController extends Controller
 {
@@ -12,9 +17,17 @@ class PublisherController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+      $name = $request->input('name');
 
+      $publishers = Publisher::with('books')
+        ->when($name, function($query) use($name){
+          return $query->where($name, 'like', "%$name%");
+        })
+        ->paginate(10);
+
+        return new PublisherCollection($publishers);
     }
 
     /**
@@ -35,7 +48,26 @@ class PublisherController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try{
+          $publisher = new Publisher;
+          $publisher->fill($request->all());
+          $publisher->saveOrFail();
+
+          return response()->json([
+            'id' => $publisher->id,
+            'created_at' => $publisher->created_at
+          ], 201);
+        }
+        catch(QueryException $ex){
+          return reponse()->json([
+            'message' => $ex->getMessage(),
+          ], 500);
+        }
+        catch(\Exception $ex){
+          return response()->json([
+            'message' => $ex->getMessage(),
+          ], 500);
+        }
     }
 
     /**
@@ -44,9 +76,20 @@ class PublisherController extends Controller
      * @param  \App\Publisher  $publisher
      * @return \Illuminate\Http\Response
      */
-    public function show(Publisher $publisher)
+    public function show($id)
     {
-        //
+        try{
+          $publisher = Publisher::with('books')->find($id);
+
+          if(!$publisher) throw new ModelNotFoundException;
+
+          return new PublisherResource($publisher);
+        }
+        catch(ModelNotFoundException $ex){
+          return response()->json([{
+            'message' => $ex->getMessage(),
+          }], 404);
+        }
     }
 
     /**
@@ -67,9 +110,33 @@ class PublisherController extends Controller
      * @param  \App\Publisher  $publisher
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Publisher $publisher)
+    public function update(Request $request, $id)
     {
-        //
+      try{
+        $publisher = Publisher::find($id);
+
+        if(!$publisher) throw new ModelNotFoundException;
+
+        $publisher->fill($request->all());
+        $publisher->saveOrFail();
+
+        return response()->json(null, 201);
+      }
+      catch(ModelNotFoundException $ex){
+        return response()->json([
+          'message' => $ex->getMessage()
+        ])
+      }
+      catch(QueryException $ex){
+        return response()->json([
+          'message' => $ex->getMessage()
+        ])
+      }
+      catch(\Exception $ex){
+        return response()->json([
+          'message' => $ex->getMessage()
+        ])
+      }
     }
 
     /**
@@ -78,8 +145,31 @@ class PublisherController extends Controller
      * @param  \App\Publisher  $publisher
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Publisher $publisher)
+    public function destroy($id)
     {
-        //
+        try{
+          $publisher = Publisher::find($id);
+
+          if($publisher) throw new ModelNotFoundException;
+
+          $publisher->delete();
+
+          return response()->json(null, 201);
+        }
+        catch(ModelNotFoundException $ex){
+          return response()->json([
+            'message' => $ex->getMessage()
+          ])
+        }
+        catch(QueryException $ex){
+          return response()->json([
+            'message' => $ex->getMessage()
+          ])
+        }
+        catch(\Exception $ex){
+          return response()->json([
+            'message' => $ex->getMessage()
+          ])
+        }
     }
 }

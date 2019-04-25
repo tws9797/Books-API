@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Author;
+use App\Http\Requests\AuthorRequest;
+use App\Http\Resources\AuthorCollection;
+use App\Http\Resources\AuthorResource;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AuthorController extends Controller
 {
@@ -12,9 +17,17 @@ class AuthorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+      $name = $request->input('name');
+
+      $authors = Author::with('books')
+      ->where($name, function($query) use ($name){
+        return $query->where($name, 'like', "%$name%");
+      })
+      ->paginate(10);
+
+      return new AuthorCollection($authors);
     }
 
     /**
@@ -35,7 +48,26 @@ class AuthorController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try{
+          $author = new Author;
+          $author->fill($request->all());
+          $author->saveOrFail();
+
+          return response()->json([
+            'id' => $author->id,
+            'created_at' => $author->created_at,
+          ], 201);
+        }
+        catch(QueryException $ex){
+          return response()->json([
+            'message' => $ex->getMessage()
+          ], 500);
+        }
+        catch(\Exception $ex){
+          return response()->json([
+            'message' => $ex->getMessage()
+          ], 500);
+        }
     }
 
     /**
@@ -44,9 +76,20 @@ class AuthorController extends Controller
      * @param  \App\Author  $author
      * @return \Illuminate\Http\Response
      */
-    public function show(Author $author)
+    public function show($id)
     {
-        //
+        try{
+          $author = Author::with('books')->find($id);
+
+          if(!$author) throw new ModelNotFoundException;
+
+          return new AuthorResource($author);
+        }
+        catch(ModelNotFoundException $ex){
+          return response()->json([
+            'message' => $ex->getMessage()
+          ], 404);
+        }
     }
 
     /**
@@ -67,9 +110,32 @@ class AuthorController extends Controller
      * @param  \App\Author  $author
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Author $author)
+    public function update(Request $request, $id)
     {
-        //
+        try{
+          $author = Author::find($id);
+          if(!$author) throw new ModelNotFoundException;
+
+          $author->fill($request->all());
+          $author->saveOrFail();
+
+          return response()->json(null, 204);
+        }
+        catch(ModelNotFoundException $ex){
+          return response()->json([
+            'message' => $ex->message(),
+          ], 404);
+        }
+        catch(QueryException $ex){
+          return response()->json([
+            'message' => $ex->message(),
+          ], 500);
+        }
+        catch(\Exception $ex){
+          return response()->json([
+            'message' => $ex->message(),
+          ], 500);
+        }
     }
 
     /**
@@ -78,8 +144,31 @@ class AuthorController extends Controller
      * @param  \App\Author  $author
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Author $author)
+    public function destroy($id)
     {
-        //
+        try{
+          $author = Author::find($id);
+
+          if(!$author) throw new ModelNotFoundException;
+
+          $author->delete();
+
+          return response()->json(null, 204);
+        }
+        catch(ModelNotFoundException $ex){
+          return response()->json([
+            'message' => $ex->getMessage(),
+          ]);
+        }
+        catch(QueryException $ex){
+          return response()->json([
+            'message' => $ex->getMessage(),
+          ])
+        }
+        catch(\Exception $ex){
+          return response()->json([
+            'message' => $ex->getMessage(),
+          ])
+        }
     }
 }
