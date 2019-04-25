@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AuthorRequest extends FormRequest
+class AuthorRequest extends ApiFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\Isbn;
 
-class BookRequest extends FormRequest
+class BookRequest extends ApiFormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,7 +26,7 @@ class BookRequest extends FormRequest
     {
         return [
             'isbn' => ['required', 'string', 'unique:books', new Isbn],
-            'title' => 'required|string|max:200',
+            'title' => 'required|string|max:150',
             'year' => 'required|digits:4|integer|min:1900|max:'.(date('Y')+1),
             'publisher' => 'required|exists:publishers, id',
             'author' => 'required|exists:authors, id',

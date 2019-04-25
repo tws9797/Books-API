@@ -46,7 +46,7 @@ class PublisherController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(PublisherRequest $request)
     {
         try{
           $publisher = new Publisher;
@@ -110,7 +110,7 @@ class PublisherController extends Controller
      * @param  \App\Publisher  $publisher
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(PublisherRequest $request, $id)
     {
       try{
         $publisher = Publisher::find($id);
@@ -120,22 +120,22 @@ class PublisherController extends Controller
         $publisher->fill($request->all());
         $publisher->saveOrFail();
 
-        return response()->json(null, 201);
+        return response()->json(null, 204);
       }
-      catch(ModelNotFoundException $ex){
-        return response()->json([
-          'message' => $ex->getMessage()
-        ])
+      catch(ModelNotFoundException $ex) {
+          return response()->json([
+              'message' => $ex->getMessage(),
+          ], 404);
       }
-      catch(QueryException $ex){
-        return response()->json([
-          'message' => $ex->getMessage()
-        ])
+      catch(QueryException $ex) {
+          return response()->json([
+              'message' => $ex->getMessage(),
+          ], 500);
       }
-      catch(\Exception $ex){
-        return response()->json([
-          'message' => $ex->getMessage()
-        ])
+      catch(\Exception $ex) {
+          return response()->json([
+              'message' => $ex->getMessage(),
+          ], 500);
       }
     }
 
@@ -156,20 +156,20 @@ class PublisherController extends Controller
 
           return response()->json(null, 201);
         }
-        catch(ModelNotFoundException $ex){
-          return response()->json([
-            'message' => $ex->getMessage()
-          ])
+        catch(ModelNotFoundException $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 404);
         }
-        catch(QueryException $ex){
-          return response()->json([
-            'message' => $ex->getMessage()
-          ])
+        catch(QueryException $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 500);
         }
-        catch(\Exception $ex){
-          return response()->json([
-            'message' => $ex->getMessage()
-          ])
+        catch(\Exception $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 500);
         }
     }
 }

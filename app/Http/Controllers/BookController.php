@@ -62,7 +62,7 @@ class BookController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(BookRequest $request)
     {
         try{
           $book = new Book;
@@ -74,17 +74,17 @@ class BookController extends Controller
           return response()->json([
             'id' => $book->id,
             'created_at' => $book->created_at,
-          ]);
+          ], 201);
         }
-        catch(QueryException $ex){
-          return response()->json([
-            'message' => $ex->getMessage(),
-          ]);
+        catch(QueryException $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 500);
         }
-        catch(/Exception $ex){
-          return response()->json([
-            'message' => $ex->getMessage(),
-          ]);
+        catch(\Exception $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 500);
         }
     }
 
@@ -100,12 +100,12 @@ class BookController extends Controller
           $book = Book::with(['authors', 'publisher'])->find($id);
           if(!$book) throw new ModelNotFoundException;
 
-          return BookResource($book);
+          return new BookResource($book);
         }
         catch(ModelNotFoundException $ex){
           return response()->json([
             'message' => $ex->getMessage(),
-          ]);
+          ], 404);
         }
     }
 
@@ -127,28 +127,30 @@ class BookController extends Controller
      * @param  \App\Book  $book
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(BookRequest $request, $id)
     {
         try{
           $book = Book::find($id);
           if(!$book) throw new ModelNotFoundException;
           $book->fill($request->all());
           $book->saveOrFail();
+
+          return response()->json(null, 204);
         }
-        catch(ModelNotFoundException $ex){
-          return response()->json([
-            'message' => $ex->getMessage(),
-          ]);
+        catch(ModelNotFoundException $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 404);
         }
-        catch(QueryException $ex){
-          return response()->json([
-            'message' => $ex->getMessage(),
-          ]);
+        catch(QueryException $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 500);
         }
-        catch(/Exception $ex){
-          return response()->json([
-            'message' => $ex->getMessage(),
-          ]);
+        catch(\Exception $ex) {
+            return response()->json([
+                'message' => $ex->getMessage(),
+            ], 500);
         }
 
     }
@@ -165,21 +167,23 @@ class BookController extends Controller
         $book = Book::find($id);
         if(!$book) throw new ModelNotFoundException;
         $book->delete();
+
+        return response()->json(null, 204);
       }
-      catch(ModelNotFoundException $ex){
-        return response()->json([
-          'message' => $ex->getMessage(),
-        ]);
+      catch(ModelNotFoundException $ex) {
+          return response()->json([
+              'message' => $ex->getMessage(),
+          ], 404);
       }
-      catch(QueryException $ex){
-        return response()->json([
-          'message' => $ex->getMessage(),
-        ]);
+      catch(QueryException $ex) {
+          return response()->json([
+              'message' => $ex->getMessage(),
+          ], 500);
       }
-      catch(/Exception $ex){
-        return response()->json([
-          'message' => $ex->getMessage(),
-        ]);
+      catch(\Exception $ex) {
+          return response()->json([
+              'message' => $ex->getMessage(),
+          ], 500);
       }
     }
 }
