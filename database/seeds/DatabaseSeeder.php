@@ -11,6 +11,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // $this->call(UsersTableSeeder::class);
+      factory(App\User::class, 5)->create();
+      factory(App\Author::class, 30)->create();
+      factory(App\Publisher::class, 30)->create();
+      factory(App\Book::class, 50)->create();
+      foreach( range(1,30) as $index){
+        DB::table('author_book')->insert(
+          [
+            'author_id' => App\Author::select('id')->inRandomOrder()->first()->id,
+            'book_id' => App\Book::select('id')->inRandomOrder()->first()->id
+          ]
+        );
+      }
     }
 }
