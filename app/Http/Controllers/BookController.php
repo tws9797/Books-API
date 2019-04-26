@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Book;
+use App\User;
 use App\Http\Requests\BookRequest;
 use App\Http\Resources\BookCollection;
 use App\Http\Resources\BookResource;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
 
 class BookController extends Controller
 {
@@ -65,16 +67,22 @@ class BookController extends Controller
     public function store(BookRequest $request)
     {
         try{
+          $user = Auth::user();
+          if($user->can('create', Book::class)){
           $book = new Book;
           $book->fill($request->all());
-          $book->publisher_id = $request->publisher_id;
-          $book->saveOrFail();
-          $book->authors()->sync($request->authors);
+            $book->publisher_id = $request->publisher_id;
+            $book->saveOrFail();
+            $book->authors()->sync($request->authors);
 
-          return response()->json([
-            'id' => $book->id,
-            'created_at' => $book->created_at,
-          ], 201);
+            return response()->json([
+              'id' => $book->id,
+              'created_at' => $book->created_at,
+            ], 201);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(QueryException $ex) {
             return response()->json([
@@ -97,10 +105,15 @@ class BookController extends Controller
     public function show($id)
     {
         try{
+          $user = Auth::user();
           $book = Book::with(['authors', 'publisher'])->find($id);
           if(!$book) throw new ModelNotFoundException;
-
-          return new BookResource($book);
+          if($user->can('view', $book)){
+            return new BookResource($book);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex){
           return response()->json([
@@ -130,14 +143,20 @@ class BookController extends Controller
     public function update(BookRequest $request, $id)
     {
         try{
+          $user = Auth::user();
           $book = Book::find($id);
           if(!$book) throw new ModelNotFoundException;
-          $book->fill($request->all());
-          $book->publisher_id = $request->publisher_id;
-          $book->saveOrFail();
-          $book->authors()->sync($request->authors);
+          if($user->can('update', $book)){
+            $book->fill($request->all());
+            $book->publisher_id = $request->publisher_id;
+            $book->saveOrFail();
+            $book->authors()->sync($request->authors);
 
-          return response()->json(null, 204);
+            return response()->json(null, 204);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex) {
             return response()->json([
@@ -166,11 +185,16 @@ class BookController extends Controller
     public function destroy($id)
     {
       try{
+        $user = Auth::user();
         $book = Book::find($id);
         if(!$book) throw new ModelNotFoundException;
-        $book->delete();
-
-        return response()->json(null, 204);
+        if($user->can('delete', $book)){
+          $book->delete();
+          return response()->json(null, 204);
+        }
+        else{
+          return response()->json(['message' => 'Unauthorized']);
+        }
       }
       catch(ModelNotFoundException $ex) {
           return response()->json([

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Author;
+use App\User
 use App\Http\Requests\AuthorRequest;
 use App\Http\Resources\AuthorCollection;
 use App\Http\Resources\AuthorResource;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
 
 class AuthorController extends Controller
 {
@@ -49,14 +51,19 @@ class AuthorController extends Controller
     public function store(AuthorRequest $request)
     {
         try{
-          $author = new Author;
-          $author->fill($request->all());
-          $author->saveOrFail();
-
-          return response()->json([
-            'id' => $author->id,
-            'created_at' => $author->created_at,
-          ], 201);
+          $user = Auth::user();
+          if($user->can('create', Author::class)){
+            $author = new Author;
+            $author->fill($request->all());
+            $author->saveOrFail();
+            return response()->json([
+              'id' => $author->id,
+              'created_at' => $author->created_at,
+            ], 201);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(QueryException $ex){
           return response()->json([
@@ -79,11 +86,15 @@ class AuthorController extends Controller
     public function show($id)
     {
         try{
+          $user = User::Auth();
           $author = Author::with('books')->find($id);
-
           if(!$author) throw new ModelNotFoundException;
-
-          return new AuthorResource($author);
+          if($user->can('view', $author)){
+            return new AuthorResource($author);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex){
           return response()->json([
@@ -113,13 +124,18 @@ class AuthorController extends Controller
     public function update(AuthorRequest $request, $id)
     {
         try{
+          $user = User::Auth();
           $author = Author::find($id);
           if(!$author) throw new ModelNotFoundException;
+          if($user->can('update', $author)){
+            $author->fill($request->all());
+            $author->saveOrFail();
 
-          $author->fill($request->all());
-          $author->saveOrFail();
-
-          return response()->json(null, 204);
+            return response()->json(null, 204);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex){
           return response()->json([
@@ -147,13 +163,16 @@ class AuthorController extends Controller
     public function destroy($id)
     {
         try{
+          $user = User::Auth();
           $author = Author::find($id);
-
           if(!$author) throw new ModelNotFoundException;
-
-          $author->delete();
-
-          return response()->json(null, 204);
+          if($user->can('delete', $author)){
+            $author->delete();
+            return response()->json(null, 204);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex){
           return response()->json([

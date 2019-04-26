@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Publisher;
+use App\User;
 use App\Http\Requests\PublisherRequest;
 use App\Http\Resources\PublisherCollection;
 use App\Http\Resources\PublisherResource;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
 
 class PublisherController extends Controller
 {
@@ -49,14 +51,20 @@ class PublisherController extends Controller
     public function store(PublisherRequest $request)
     {
         try{
-          $publisher = new Publisher;
-          $publisher->fill($request->all());
-          $publisher->saveOrFail();
+          $user = User::Auth();
+          if($user->can('create', Publisher::class)){
+            $publisher = new Publisher;
+            $publisher->fill($request->all());
+            $publisher->saveOrFail();
 
-          return response()->json([
-            'id' => $publisher->id,
-            'created_at' => $publisher->created_at
-          ], 201);
+            return response()->json([
+              'id' => $publisher->id,
+              'created_at' => $publisher->created_at
+            ], 201);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(QueryException $ex){
           return reponse()->json([
@@ -79,11 +87,15 @@ class PublisherController extends Controller
     public function show($id)
     {
         try{
+          $user = User::Auth();
           $publisher = Publisher::with('books')->find($id);
-
           if(!$publisher) throw new ModelNotFoundException;
-
-          return new PublisherResource($publisher);
+          if($user->can('view', $publisher)){
+            return new PublisherResource($publisher);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex){
           return response()->json([
@@ -113,14 +125,18 @@ class PublisherController extends Controller
     public function update(PublisherRequest $request, $id)
     {
       try{
+        $user = User::Auth();
         $publisher = Publisher::find($id);
-
         if(!$publisher) throw new ModelNotFoundException;
+        if($user->can('update', $publisher)){
+          $publisher->fill($request->all());
+          $publisher->saveOrFail();
 
-        $publisher->fill($request->all());
-        $publisher->saveOrFail();
-
-        return response()->json(null, 204);
+          return response()->json(null, 204);
+        }
+        else{
+          return response()->json(['message' => 'Unauthorized']);
+        }
       }
       catch(ModelNotFoundException $ex) {
           return response()->json([
@@ -148,13 +164,16 @@ class PublisherController extends Controller
     public function destroy($id)
     {
         try{
+          $user = User::Auth();
           $publisher = Publisher::find($id);
-
           if(!$publisher) throw new ModelNotFoundException;
-
-          $publisher->delete();
-
-          return response()->json(null, 204);
+          if($user->can('delete', $publisher)){
+            $publisher->delete();
+            return response()->json(null, 204);
+          }
+          else{
+            return response()->json(['message' => 'Unauthorized']);
+          }
         }
         catch(ModelNotFoundException $ex) {
             return response()->json([
