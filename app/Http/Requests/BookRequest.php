@@ -25,24 +25,25 @@ class BookRequest extends ApiFormRequest
     public function rules()
     {
         return [
-            'isbn' => ['required', 'string', 'unique:books', new Isbn],
+            'isbn' => ['required', 'string', new Isbn],
             'title' => 'required|string|max:150',
             'year' => 'required|digits:4|integer|min:1900|max:'.(date('Y')+1),
-            'publisher' => 'required|exists:publishers, id',
-            'author' => 'required|exists:authors, id',
+            'publisher_id' => 'required|exists:publishers,id',
+            'authors' => 'required|exists:authors,id',
         ];
     }
 
     public function message()
     {
-      'isbn.required' => 'The :attribute number is required.',
-      'title.required' => 'Book :attribute is required.',
-      'year.required' => 'The :attribute is required.',
-      'isbn.unique' => 'The :attribute is duplicated.',
-      'title.max' => 'The :attribute should be less than 200 characters',
-      'year.integer' => 'The :attribute should be integer',
-      'publisher.required' => 'The :attribute is required.',
-      'publisher.exists' => 'The :attribute does not exist.',
-      'author.exists' =>  'The :attribute does not exist.',
+      return[
+        'isbn.required' => 'The :attribute number is required.',
+        'title.required' => 'Book :attribute is required.',
+        'year.required' => 'The :attribute is required.',
+        'title.max' => 'The :attribute should be less than 200 characters',
+        'year.integer' => 'The :attribute should be integer',
+        'publisher_id.required' => 'The :attribute is required.',
+        'publisher_id.exists' => 'The :attribute does not exist.',
+        'authors.exists' =>  'The :attribute does not exist.',
+      ];
     }
 }

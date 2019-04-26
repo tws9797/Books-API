@@ -23,7 +23,7 @@ class PublisherController extends Controller
 
       $publishers = Publisher::with('books')
         ->when($name, function($query) use($name){
-          return $query->where($name, 'like', "%$name%");
+          return $query->where('name', 'like', "%$name%");
         })
         ->paginate(10);
 
@@ -86,9 +86,9 @@ class PublisherController extends Controller
           return new PublisherResource($publisher);
         }
         catch(ModelNotFoundException $ex){
-          return response()->json([{
+          return response()->json([
             'message' => $ex->getMessage(),
-          }], 404);
+          ], 404);
         }
     }
 
@@ -150,11 +150,11 @@ class PublisherController extends Controller
         try{
           $publisher = Publisher::find($id);
 
-          if($publisher) throw new ModelNotFoundException;
+          if(!$publisher) throw new ModelNotFoundException;
 
           $publisher->delete();
 
-          return response()->json(null, 201);
+          return response()->json(null, 204);
         }
         catch(ModelNotFoundException $ex) {
             return response()->json([

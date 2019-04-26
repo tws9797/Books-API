@@ -22,8 +22,8 @@ class AuthorController extends Controller
       $name = $request->input('name');
 
       $authors = Author::with('books')
-      ->where($name, function($query) use ($name){
-        return $query->where($name, 'like', "%$name%");
+      ->when($name, function($query) use ($name){
+        return $query->where('name', 'like', "%$name%");
       })
       ->paginate(10);
 
@@ -163,12 +163,12 @@ class AuthorController extends Controller
         catch(QueryException $ex){
           return response()->json([
             'message' => $ex->getMessage(),
-          ])
+          ]);
         }
         catch(\Exception $ex){
           return response()->json([
             'message' => $ex->getMessage(),
-          ])
+          ]);
         }
     }
 }

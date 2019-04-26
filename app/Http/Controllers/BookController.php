@@ -133,7 +133,9 @@ class BookController extends Controller
           $book = Book::find($id);
           if(!$book) throw new ModelNotFoundException;
           $book->fill($request->all());
+          $book->publisher_id = $request->publisher_id;
           $book->saveOrFail();
+          $book->authors()->sync($request->authors);
 
           return response()->json(null, 204);
         }

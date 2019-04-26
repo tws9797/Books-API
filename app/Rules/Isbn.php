@@ -25,7 +25,7 @@ class Isbn implements Rule
      */
     public function passes($attribute, $value)
     {
-      return preg_match('/^(97(8|9))?\d{9}(\d|X)$/',$value);
+      return preg_match('/^(97(8|9))?\d{9}(\d|X)$/', $value);
     }
 
     /**
@@ -35,6 +35,6 @@ class Isbn implements Rule
      */
     public function message()
     {
-        return 'The ISBN is not in correct format';
+      return 'The ISBN No. is invalid';
     }
 }

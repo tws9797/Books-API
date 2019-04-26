@@ -18,7 +18,7 @@ class PublisherCollection extends ResourceCollection
           'data' => $this->collection,
           'meta' => [
             'time' => date('U'),
-          ].
+          ],
         ];
     }
 }
